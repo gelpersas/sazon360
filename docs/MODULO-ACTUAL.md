@@ -4,46 +4,45 @@
 
 ## Nombre del módulo actual
 
-Historial de ventas en Filament (DEC-067) — Resource "Ventas" con filtros/búsqueda, exportación Excel/CSV/PDF y recibo PDF por venta individual.
+Edición de perfil de usuario (DEC-068) — nombre/correo/teléfono/documento de identidad editables desde `AccesoResource`. Primero de los dos módulos elegidos por el usuario; sigue impresión térmica por red.
 
 ## Objetivo
 
-Tras el despliegue a producción, el usuario consultó el estado de 4 features candidatas (reportes/export, edición de usuario extendida, impresión por red, offline) y pidió avanzar con la primera: "reportes y exportación filtros y búsquedas". La investigación encontró que no existía ningún Resource de Filament para ver el historial de ventas — solo "Pedidos abiertos" del POS (en vivo) y el "Reporte consolidado" (Fase 8, solo totales por sede) — exactamente el pendiente que DEC-024 había dejado anotado.
+El usuario pidió poder editar nombre/email de un usuario ya existente y agregar campos de perfil (teléfono, documento de identidad) — hoy `User` solo tenía name/email/password/tema, y solo eran editables al CREAR un usuario nuevo, nunca después.
 
-## Alcance incluido (DEC-067)
+## Alcance incluido (DEC-068)
 
-Ver DEC-067 para el detalle completo. Resumen: `VentaResource` (modelo `Pedido`, solo lectura, mismo patrón de scoping de sede que `CajaResource`) con tabla filtrable (rango de fecha, sede, estado, medio de pago) y búsqueda; exportación Excel/CSV nativa de Filament (`VentaExporter`, reutiliza `openspout` ya instalado); exportación PDF del listado filtrado y recibo PDF por venta individual (`barryvdh/laravel-dompdf`, dependencia nueva); dos `RelationManager` de solo lectura (ítems, pagos) en el detalle de cada venta.
+Ver DEC-068 para el detalle completo. Resumen: `users.telefono`/`users.documento_identidad` (migración aditiva); 4 campos nuevos en el modal de edición de `AccesoResource` (`AccesoForm.php`), visibles solo al editar, prellenados con los datos reales del usuario; se guardan sobre `$record->user` dentro de la misma transacción que ya reconcilia los roles. Sin `UserResource` propio (sigue vigente DEC-037 — `User` es un modelo global sin `empresa_id`).
 
 ## Fuera de alcance (a propósito)
 
-Las otras 3 features consultadas en la ronda anterior (edición de usuario extendida, impresión térmica por red, funcionamiento offline) — quedan como pendientes de fondo, a elegir por el usuario cuál sigue.
+Un `UserResource` independiente. Mostrar teléfono/documento como columnas en el listado (no se pidió). Cualquier campo de perfil más allá de teléfono y documento de identidad.
 
 ## Reglas relacionadas
 
-Ninguna nueva. Reutiliza el mecanismo nativo de exportación de Filament v4 (`ExportAction`/`Exporter`) en vez de construir uno paralelo.
+Ninguna nueva. Sigue el patrón ya establecido de DEC-041 (modal, no página aparte) y DEC-037 (gestión de usuarios vía `AccesoResource`, nunca un Resource propio).
 
 ## Archivos relacionados
 
-`database/migrations/2026_09_10_150000_create_exports_table.php`, `app/Filament/Resources/Ventas/` (Resource completo), `app/Filament/Exports/VentaExporter.php`, `app/Support/ReciboPdf.php`, `resources/views/pdf/{recibo,ventas-listado}.blade.php`, `composer.json` (+`barryvdh/laravel-dompdf`), `tests/Feature/VentaResourceTest.php`, `tests/Feature/ReporteConsolidadoTest.php` (`venderEnSede()` ahora retorna el `Pedido`), `docs/DECISIONES.md` (DEC-067).
+`database/migrations/2026_09_10_160000_add_telefono_y_documento_a_users_table.php`, `app/Models/User.php`, `app/Filament/Resources/Accesos/Schemas/AccesoForm.php`, `app/Filament/Resources/Accesos/Tables/AccesosTable.php`, `tests/Feature/AccesoResourceTest.php`, `docs/DECISIONES.md` (DEC-068).
 
 ## Trabajo terminado
 
-Implementado y verificado de punta a punta. `composer test`: 182/182 en verde (175 previos + 7 nuevos). `composer lint`: verde. `npm run build`: verde. Verificado con Playwright real (instalado/desinstalado) contra la sede real de Dulcita: listado, filtros, detalle con ítems/pagos, descarga real del recibo PDF y del PDF del listado (contenido verificado correcto), modal de exportación Excel/CSV de Filament abriendo correctamente. Durante la verificación se encontró y corrigió un bug real (no cosmético): las Actions de PDF no disparaban la descarga porque Livewire solo reconoce `StreamedResponse`/`BinaryFileResponse` como descarga, y `Pdf::download()` devuelve un `Response` plano — corregido envolviendo el contenido en `response()->streamDownload()`.
+Implementado y verificado de punta a punta. `composer test`: 185/185 en verde (182 previos + 3 nuevos). `composer lint`: verde. Verificado con Playwright real (instalado/desinstalado) contra la sede real de Dulcita: modal de edición con los 4 campos prellenados, edición real guardada y confirmada contra la base de datos, datos de prueba revertidos al terminar. Cero errores de consola.
 
 ## Trabajo pendiente
 
-Ninguno bloqueante para este módulo. Pendiente de decisión del usuario: cuál de las otras 3 features (edición de usuario extendida, impresión térmica por red, offline) abordar después.
+Ninguno bloqueante para este módulo. Sigue el segundo módulo elegido por el usuario: **impresión térmica por red** (configurar impresora por IP:puerto por área de preparación, envío directo sin pantalla intermedia) — subsistema completo, nada existe hoy (ver la investigación de la ronda anterior).
 
 ## Pruebas ejecutadas
 
-- `composer test` (Pest): 182/182 passed, 551 assertions.
+- `composer test` (Pest): 185/185 passed, 568 assertions.
 - `composer lint` (Pint): verde.
-- `npm run build`: verde.
-- Verificación manual con Playwright (temporal, instalado/desinstalado) contra datos reales de Dulcita — incluida la descarga real de ambos PDFs y verificación de su contenido.
+- Verificación manual con Playwright (temporal, instalado/desinstalado) contra datos reales de Dulcita.
 
 ## Errores conocidos
 
-Ninguno abierto. Nota aparte (no de este módulo): la sede real de Dulcita acumula datos de prueba de rondas anteriores de esta sesión (68 "ventas" en distintos estados) — visible ahora en el nuevo listado; no afecta la corrección del módulo, pero conviene que el usuario los revise si no corresponden a actividad real.
+Ninguno abierto.
 
 ## Decisiones pendientes
 
@@ -51,4 +50,4 @@ Ninguna bloqueante para este módulo.
 
 ## Próxima acción exacta
 
-Esperar instrucción del usuario sobre cuál de las 3 features restantes de la consulta anterior abordar (edición de usuario extendida, impresión térmica por red, offline) — o cualquier otra tarea. Pendientes de fondo sin relación: Fase 6 (impuesto DIAN reales de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito). Falta configurar `FACTUS_*` en producción cuando el usuario tenga las credenciales reales.
+Arrancar el módulo de impresión térmica por red (segundo elegido por el usuario): definir dónde vive la configuración de impresora por área (¿campo nuevo en `AreaPreparacion`, o tabla aparte?), qué protocolo exacto usar para hablar con la impresora (ESC/POS por socket TCP es lo estándar), y en qué punto del flujo se dispara la impresión (al enviar la comanda, mismo lugar que hoy notifica al KDS). Seguir `/crear-modulo` — hay decisiones de arquitectura que probablemente necesiten confirmación del usuario antes de programar (ej. si la impresión reemplaza o convive con el KDS digital, ya que el propio usuario mencionó ambas opciones). Pendientes de fondo sin relación: Fase 6 (impuesto DIAN reales de Dulcita), DEC-042 (POS electrónico, nota crédito/débito), credenciales `FACTUS_*` en producción.

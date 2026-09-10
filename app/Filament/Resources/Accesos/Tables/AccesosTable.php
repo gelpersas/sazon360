@@ -77,6 +77,11 @@ class AccesosTable
                     ->map(fn (Rol $rol) => $rol->value)
                     ->all();
 
+                $data['user_name'] = $record->user->name;
+                $data['user_email'] = $record->user->email;
+                $data['user_telefono'] = $record->user->telefono;
+                $data['user_documento_identidad'] = $record->user->documento_identidad;
+
                 return $data;
             })
             ->using(function (Acceso $record, array $data): Acceso {
@@ -84,6 +89,16 @@ class AccesosTable
                 $nuevo = null;
 
                 DB::transaction(function () use ($record, $data, $sedeId, &$nuevo) {
+                    // Perfil de quien ya tenía este acceso — independiente
+                    // de si el campo "Usuario" de arriba lo reasigna a otra
+                    // persona (ver docblock de AccesoForm).
+                    $record->user->update([
+                        'name' => $data['user_name'],
+                        'email' => $data['user_email'],
+                        'telefono' => $data['user_telefono'] ?? null,
+                        'documento_identidad' => $data['user_documento_identidad'] ?? null,
+                    ]);
+
                     // Se reemplaza el grupo completo (todas las filas de
                     // este usuario en esta sede) por los roles marcados en
                     // el formulario — más simple y seguro que intentar

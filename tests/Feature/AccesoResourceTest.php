@@ -211,3 +211,77 @@ it('la base de datos rechaza duplicar administración central del mismo usuario 
         'rol' => Rol::AdministracionCentral,
     ]))->toThrow(QueryException::class);
 });
+
+it('el formulario de edición viene prellenado con el perfil actual del usuario', function () {
+    [$empresa, $sedes, $admin] = crearEmpresaConAdminCentralYSedes('Empresa Editar Perfil Prellenado');
+    $sede = $sedes->first();
+
+    $usuario = User::factory()->create(['name' => 'Ana Mesera', 'email' => 'ana@dulcita.test', 'telefono' => '3001234567']);
+    $acceso = $usuario->accesos()->create(['empresa_id' => $empresa->id, 'sede_id' => $sede->id, 'rol' => Rol::Mesero]);
+
+    $this->actingAs($admin);
+    $this->get("/admin/{$empresa->slug}/accesos");
+
+    Livewire::test(ListAccesos::class)
+        ->mountTableAction('edit', $acceso)
+        ->assertTableActionDataSet([
+            'user_name' => 'Ana Mesera',
+            'user_email' => 'ana@dulcita.test',
+            'user_telefono' => '3001234567',
+        ]);
+});
+
+it('editar un acceso permite corregir el nombre, correo, teléfono y documento del usuario', function () {
+    [$empresa, $sedes, $admin] = crearEmpresaConAdminCentralYSedes('Empresa Editar Perfil Usuario');
+    $sede = $sedes->first();
+
+    $usuario = User::factory()->create(['name' => 'Nombre Viejo', 'email' => 'viejo@dulcita.test']);
+    $acceso = $usuario->accesos()->create(['empresa_id' => $empresa->id, 'sede_id' => $sede->id, 'rol' => Rol::Mesero]);
+
+    $this->actingAs($admin);
+    $this->get("/admin/{$empresa->slug}/accesos");
+
+    Livewire::test(ListAccesos::class)
+        ->mountTableAction('edit', $acceso)
+        ->setTableActionData([
+            'roles' => ['mesero'],
+            'sede_id' => $sede->id,
+            'user_name' => 'Nombre Nuevo',
+            'user_email' => 'nuevo@dulcita.test',
+            'user_telefono' => '3009876543',
+            'user_documento_identidad' => '123456789',
+        ])
+        ->callMountedTableAction()
+        ->assertHasNoTableActionErrors();
+
+    $usuario->refresh();
+    expect($usuario->name)->toBe('Nombre Nuevo');
+    expect($usuario->email)->toBe('nuevo@dulcita.test');
+    expect($usuario->telefono)->toBe('3009876543');
+    expect($usuario->documento_identidad)->toBe('123456789');
+});
+
+it('rechaza cambiar el correo a uno que ya usa otro usuario', function () {
+    [$empresa, $sedes, $admin] = crearEmpresaConAdminCentralYSedes('Empresa Editar Correo Duplicado');
+    $sede = $sedes->first();
+
+    User::factory()->create(['email' => 'ocupado@dulcita.test']);
+    $usuario = User::factory()->create(['email' => 'libre@dulcita.test']);
+    $acceso = $usuario->accesos()->create(['empresa_id' => $empresa->id, 'sede_id' => $sede->id, 'rol' => Rol::Mesero]);
+
+    $this->actingAs($admin);
+    $this->get("/admin/{$empresa->slug}/accesos");
+
+    Livewire::test(ListAccesos::class)
+        ->mountTableAction('edit', $acceso)
+        ->setTableActionData([
+            'roles' => ['mesero'],
+            'sede_id' => $sede->id,
+            'user_name' => $usuario->name,
+            'user_email' => 'ocupado@dulcita.test',
+        ])
+        ->callMountedTableAction()
+        ->assertHasTableActionErrors(['user_email']);
+
+    expect($usuario->fresh()->email)->toBe('libre@dulcita.test');
+});

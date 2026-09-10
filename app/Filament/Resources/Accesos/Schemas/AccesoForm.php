@@ -13,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 /**
  * Un `Acceso` en base de datos sigue siendo una fila por rol (sin cambiar
@@ -57,6 +58,39 @@ class AccesoForm
                             ->required()
                             ->minLength(8),
                     ]),
+
+                // Perfil del usuario ya existente — solo al editar (no al
+                // crear: dar de alta un usuario nuevo ya pasa por
+                // ->createOptionForm() arriba, con sus propios name/email;
+                // duplicarlos aquí también sería confuso). Se guardan sobre
+                // $record->user, no sobre el `user_id` del formulario —
+                // reasignar el acceso a otra persona (raro, pero el campo de
+                // arriba lo permite) es una operación aparte de corregir el
+                // perfil de quien ya lo tenía.
+                TextInput::make('user_name')
+                    ->label('Nombre')
+                    ->required()
+                    ->maxLength(255)
+                    ->visible(fn (?Acceso $record) => $record !== null)
+                    ->dehydrated(fn (?Acceso $record) => $record !== null),
+                TextInput::make('user_email')
+                    ->label('Correo')
+                    ->email()
+                    ->required()
+                    ->rule(fn (?Acceso $record) => Rule::unique('users', 'email')->ignore($record?->user_id))
+                    ->visible(fn (?Acceso $record) => $record !== null)
+                    ->dehydrated(fn (?Acceso $record) => $record !== null),
+                TextInput::make('user_telefono')
+                    ->label('Teléfono')
+                    ->tel()
+                    ->maxLength(50)
+                    ->visible(fn (?Acceso $record) => $record !== null)
+                    ->dehydrated(fn (?Acceso $record) => $record !== null),
+                TextInput::make('user_documento_identidad')
+                    ->label('Documento de identidad')
+                    ->maxLength(50)
+                    ->visible(fn (?Acceso $record) => $record !== null)
+                    ->dehydrated(fn (?Acceso $record) => $record !== null),
 
                 CheckboxList::make('roles')
                     ->label('Roles')
