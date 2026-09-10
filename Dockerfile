@@ -7,7 +7,20 @@
 # `php artisan reverb:start ...` / `php artisan queue:work ...` — mismo
 # código, mismas dependencias, sin reconstruir nada aparte.
 
-# ---- Etapa 1: build de assets del POS (Vite) ----
+# ---- Etapa 1: dependencias de Composer, solo para exponerle vendor/ al
+# build de Vite (abajo) — resources/css/filament/admin/theme.css importa
+# vendor/filament/filament/resources/css/theme.css, y ese archivo a su vez
+# escanea vistas Blade de Filament dentro de vendor/ para generar las clases
+# de Tailwind: sin vendor/ presente, `npm run build` falla al no poder
+# resolver ese import. --no-scripts evita ejecutar `artisan` (no hay PHP con
+# las extensiones del proyecto en esta etapa, ni falta hace: solo necesitamos
+# los archivos de los paquetes en disco, no un autoloader funcional).
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --ignore-platform-reqs
+
+# ---- Etapa 2: build de assets del POS (Vite) ----
 FROM node:22-alpine AS assets
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -15,6 +28,16 @@ RUN npm ci
 COPY vite.config.js ./
 COPY resources resources
 COPY public public
+# resources/css/filament/admin/theme.css escanea app/Filament (@source) para
+# generar las clases de Tailwind que usan las páginas/recursos de Filament —
+# sin este directorio el build "funciona" pero produce un CSS incompleto,
+# rompiendo estilos del panel admin en silencio (no un error de build).
+# storage/framework/views también es un @source de resources/css/app.css
+# (vistas Blade compiladas) — normalmente vacío en un build limpio, se copia
+# solo para que el directorio exista y el glob no falle.
+COPY app app
+COPY storage storage
+COPY --from=vendor /app/vendor vendor
 # Vite incrusta las variables VITE_* en el bundle en tiempo de build, no de
 # arranque — deben pasarse como --build-arg al construir la imagen.
 ARG VITE_REVERB_APP_KEY
@@ -27,7 +50,7 @@ ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
     VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 RUN npm run build
 
-# ---- Etapa 2: imagen final (PHP-FPM + Nginx) ----
+# ---- Etapa 3: imagen final (PHP-FPM + Nginx) ----
 FROM php:8.3-fpm-alpine
 
 RUN apk add --no-cache nginx supervisor postgresql-libs \
