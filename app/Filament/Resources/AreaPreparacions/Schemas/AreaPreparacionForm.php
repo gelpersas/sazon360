@@ -43,6 +43,18 @@ class AreaPreparacionForm
                     ->default(0)
                     ->required(),
                 ToggleEstado::make(valorActivo: 'activa', valorInactivo: 'inactiva'),
+                TextInput::make('impresora_ip')
+                    ->label('IP de la impresora')
+                    ->helperText('Opcional — sin esto, el área sigue funcionando solo con el KDS. Debe poder alcanzarse desde el servidor (IP pública con el puerto redirigido, no una IP privada de la red local).')
+                    ->ip()
+                    ->nullable(),
+                TextInput::make('impresora_puerto')
+                    ->label('Puerto de la impresora')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(65535)
+                    ->nullable()
+                    ->requiredWith('impresora_ip'),
             ]);
     }
 }

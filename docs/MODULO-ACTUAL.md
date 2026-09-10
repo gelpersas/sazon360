@@ -4,45 +4,46 @@
 
 ## Nombre del módulo actual
 
-Edición de perfil de usuario (DEC-068) — nombre/correo/teléfono/documento de identidad editables desde `AccesoResource`. Primero de los dos módulos elegidos por el usuario; sigue impresión térmica por red.
+Impresión térmica por red (DEC-069) — configuración de impresora por IP/puerto en `AreaPreparacion`, disparada al enviar una comanda, conviviendo con el KDS digital. Segundo y último de los dos módulos elegidos por el usuario (el primero, edición de perfil, ya está en DEC-068).
 
 ## Objetivo
 
-El usuario pidió poder editar nombre/email de un usuario ya existente y agregar campos de perfil (teléfono, documento de identidad) — hoy `User` solo tenía name/email/password/tema, y solo eran editables al CREAR un usuario nuevo, nunca después.
+El usuario pidió un módulo para configurar impresora por puerto y área, con impresión directa sin pedir nada. La investigación encontró que `docs/ARQUITECTURA.md` ya había anticipado el problema real (backend en VPS remoto, impresoras en red local de Dulcita) sin resolverlo — este módulo lo resuelve.
 
-## Alcance incluido (DEC-068)
+## Alcance incluido (DEC-069)
 
-Ver DEC-068 para el detalle completo. Resumen: `users.telefono`/`users.documento_identidad` (migración aditiva); 4 campos nuevos en el modal de edición de `AccesoResource` (`AccesoForm.php`), visibles solo al editar, prellenados con los datos reales del usuario; se guardan sobre `$record->user` dentro de la misma transacción que ya reconcilia los roles. Sin `UserResource` propio (sigue vigente DEC-037 — `User` es un modelo global sin `empresa_id`).
+Ver DEC-069 para el detalle completo. Resumen: en vez de un "agente local" (lo que `ARQUITECTURA.md` había anticipado), Dulcita usa una IP pública con reenvío de puertos restringido a la IP del VPS (confirmado con el usuario) — el backend se conecta directo. `AreaPreparacion.impresora_ip`/`impresora_puerto` (nullable, configurable en Filament). `app/Listeners/ImprimirComandaAlEnviar.php` escucha el mismo evento que ya notifica al KDS y despacha `ImprimirComandaJob` (en cola, con reintentos nativos) solo cuando la comanda es nueva (`Pendiente`) y el área tiene impresora. `app/Services/Impresion/TicketComanda.php` construye el ticket ESC/POS (`mike42/escpos-php`, dependencia nueva). La impresión convive con el KDS, nunca lo reemplaza.
 
 ## Fuera de alcance (a propósito)
 
-Un `UserResource` independiente. Mostrar teléfono/documento como columnas en el listado (no se pidió). Cualquier campo de perfil más allá de teléfono y documento de identidad.
+Un "agente local" de impresión (descartado a favor de IP pública, ver DEC-069). Reintentos/alertas visibles en la UI si la impresora falla (el usuario confirmó que reintentar en silencio es suficiente). Imprimir en cada avance de estado del KDS (solo se imprime una vez, al crear la comanda).
 
 ## Reglas relacionadas
 
-Ninguna nueva. Sigue el patrón ya establecido de DEC-041 (modal, no página aparte) y DEC-037 (gestión de usuarios vía `AccesoResource`, nunca un Resource propio).
+Sigue `.claude/rules/laravel.md` al pie de la letra: "impresión" es el ejemplo textual que ya pedía Eventos+Listeners (no llamadas directas) y Jobs con cola (no bloquear la respuesta).
 
 ## Archivos relacionados
 
-`database/migrations/2026_09_10_160000_add_telefono_y_documento_a_users_table.php`, `app/Models/User.php`, `app/Filament/Resources/Accesos/Schemas/AccesoForm.php`, `app/Filament/Resources/Accesos/Tables/AccesosTable.php`, `tests/Feature/AccesoResourceTest.php`, `docs/DECISIONES.md` (DEC-068).
+`database/migrations/2026_09_10_170000_add_impresora_a_area_preparacions_table.php`, `app/Models/AreaPreparacion.php`, `app/Filament/Resources/AreaPreparacions/Schemas/AreaPreparacionForm.php`, `app/Services/Impresion/TicketComanda.php`, `app/Jobs/ImprimirComandaJob.php`, `app/Listeners/ImprimirComandaAlEnviar.php`, `tests/Feature/ImpresionComandaTest.php`, `composer.json` (+`mike42/escpos-php`), `docs/DECISIONES.md` (DEC-069).
 
 ## Trabajo terminado
 
-Implementado y verificado de punta a punta. `composer test`: 185/185 en verde (182 previos + 3 nuevos). `composer lint`: verde. Verificado con Playwright real (instalado/desinstalado) contra la sede real de Dulcita: modal de edición con los 4 campos prellenados, edición real guardada y confirmada contra la base de datos, datos de prueba revertidos al terminar. Cero errores de consola.
+Implementado y verificado de punta a punta. `composer test`: 191/191 en verde (185 previos + 6 nuevos). `composer lint`: verde. Verificado con Playwright real (formulario con los campos nuevos, edición real guardada) y un flujo end-to-end real vía `tinker` (comanda real → `ImprimirComandaJob` encolado en la tabla `jobs` real, sin poder probar contra una impresora física real). Datos de prueba revertidos al terminar.
 
 ## Trabajo pendiente
 
-Ninguno bloqueante para este módulo. Sigue el segundo módulo elegido por el usuario: **impresión térmica por red** (configurar impresora por IP:puerto por área de preparación, envío directo sin pantalla intermedia) — subsistema completo, nada existe hoy (ver la investigación de la ronda anterior).
+- **No probado contra una impresora física real** — no hay ninguna disponible en este entorno de desarrollo. Cuando Dulcita tenga la IP pública/reenvío de puertos configurado en su router, hay que confirmar con una impresora real que el ticket se imprime correctamente (formato, corte de papel, codificación de caracteres).
+- Con eso resueltos los 2 módulos que el usuario eligió de la consulta de prioridades. Quedan sin abordar (no pedidos todavía): funcionamiento offline, y los bloqueados esperando datos del usuario (Fase 6 DIAN, DEC-042, credenciales `FACTUS_*`).
 
 ## Pruebas ejecutadas
 
-- `composer test` (Pest): 185/185 passed, 568 assertions.
+- `composer test` (Pest): 191/191 passed, 581 assertions.
 - `composer lint` (Pint): verde.
-- Verificación manual con Playwright (temporal, instalado/desinstalado) contra datos reales de Dulcita.
+- Verificación manual con Playwright (temporal, instalado/desinstalado) + `tinker` contra datos reales de Dulcita.
 
 ## Errores conocidos
 
-Ninguno abierto.
+Ninguno abierto. No probado contra hardware real (ver "Trabajo pendiente").
 
 ## Decisiones pendientes
 
@@ -50,4 +51,4 @@ Ninguna bloqueante para este módulo.
 
 ## Próxima acción exacta
 
-Arrancar el módulo de impresión térmica por red (segundo elegido por el usuario): definir dónde vive la configuración de impresora por área (¿campo nuevo en `AreaPreparacion`, o tabla aparte?), qué protocolo exacto usar para hablar con la impresora (ESC/POS por socket TCP es lo estándar), y en qué punto del flujo se dispara la impresión (al enviar la comanda, mismo lugar que hoy notifica al KDS). Seguir `/crear-modulo` — hay decisiones de arquitectura que probablemente necesiten confirmación del usuario antes de programar (ej. si la impresión reemplaza o convive con el KDS digital, ya que el propio usuario mencionó ambas opciones). Pendientes de fondo sin relación: Fase 6 (impuesto DIAN reales de Dulcita), DEC-042 (POS electrónico, nota crédito/débito), credenciales `FACTUS_*` en producción.
+Esperar a que Dulcita configure la IP pública/reenvío de puertos en su router para probar contra una impresora real. Mientras tanto, esperar instrucción del usuario sobre qué sigue — el offline es la única de las 4 features originales sin abordar; los demás pendientes de fondo (Fase 6 DIAN, DEC-042, `FACTUS_*`) siguen bloqueados esperando datos del usuario.
