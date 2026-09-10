@@ -53,9 +53,13 @@ RUN npm run build
 # ---- Etapa 3: imagen final (PHP-FPM + Nginx) ----
 FROM php:8.3-fpm-alpine
 
-RUN apk add --no-cache nginx supervisor postgresql-libs \
-    && apk add --no-cache --virtual .build-deps postgresql-dev $PHPIZE_DEPS \
-    && docker-php-ext-install pdo pdo_pgsql pgsql bcmath opcache pcntl \
+# icu-libs/libzip quedan instaladas de forma permanente (no en .build-deps):
+# las extensiones compiladas (intl/zip) las necesitan en tiempo de EJECUCIÓN,
+# no solo para compilar — borrarlas junto con las -dev rompería intl/zip en
+# runtime aunque la imagen "compile" bien.
+RUN apk add --no-cache nginx supervisor postgresql-libs icu-libs libzip \
+    && apk add --no-cache --virtual .build-deps postgresql-dev icu-dev libzip-dev $PHPIZE_DEPS \
+    && docker-php-ext-install pdo pdo_pgsql pgsql bcmath opcache pcntl intl zip \
     && apk del .build-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
