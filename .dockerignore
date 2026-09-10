@@ -1,0 +1,16 @@
+.git
+.gitattributes
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+public/build
+public/hot
+storage/logs/*.log
+storage/*.key
+.idea
+.vscode
+tests
+docs
+AUDITORIA.md
