@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(php artisan test:*)",
+      "Bash(php artisan route:list:*)",
+      "Bash(./vendor/bin/pest:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)"
+    ],
+    "ask": [
+      "Bash(composer install:*)",
+      "Bash(composer require:*)",
+      "Bash(composer update:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(php artisan make:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(php artisan migrate:fresh:*)",
+      "Bash(php artisan migrate:reset:*)",
+      "Bash(php artisan db:wipe:*)",
+      "Edit(.env)",
+      "Read(.env)"
+    ]
+  }
+}

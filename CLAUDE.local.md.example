@@ -1,0 +1,26 @@
+# CLAUDE.local.md (ejemplo)
+
+Copia este archivo a `CLAUDE.local.md` (sin `.example`) para preferencias **locales tuyas**, que no se comparten con el equipo ni se suben al repositorio.
+
+No incluyas aquí:
+
+- Contraseñas, tokens ni credenciales.
+- Datos reales de clientes.
+- Rutas privadas innecesarias.
+- Cualquier información sensible.
+
+`CLAUDE.local.md` debe estar en `.gitignore` (ya incluido) — verifica que no se te haya colado en un `git add -A` antes de commitear.
+
+## Ejemplos de lo que sí va aquí
+
+```markdown
+## Preferencias de entorno local
+
+- Uso PHP 8.3.30 activo en Laragon (no 8.4.12).
+- Prefiero correr Pest con `--parallel` en esta máquina.
+- Mi editor abre en http://sazon360.test (dominio local de Laragon).
+
+## Notas personales de trabajo
+
+- Estoy probando la Fase 4 del roadmap con datos de prueba, no reales.
+```

@@ -1,0 +1,22 @@
+# Glosario — Sazón360
+
+- **Empresa**: tenant SaaS raíz. Agrupa una o más sedes. Ejemplo: la cadena "Café Aroma" es una empresa.
+- **Sede**: local físico perteneciente a una empresa. Ejemplo: "Café Aroma - Sucursal Centro".
+- **Punto de venta**: dispositivo/terminal desde donde se opera el POS dentro de una sede (puede haber varios por sede).
+- **Caja**: registro de dinero y movimientos asociado a un punto de venta/sede durante un turno.
+- **Turno**: periodo de trabajo de un empleado o de una caja, con apertura y cierre.
+- **Piso**: nivel o planta física de una sede (ej. "Planta baja", "Terraza").
+- **Zona**: subdivisión dentro de un piso (ej. "Zona ventanas", "Zona fumadores").
+- **Mesa**: unidad de atención dentro de una zona, donde se abre un pedido.
+- **Pedido**: conjunto de ítems solicitados por un cliente, antes o durante el cobro.
+- **Venta**: registro del pedido ya cobrado (con montos, medios de pago y comprobante).
+- **Cuenta**: agrupación de ítems de uno o varios pedidos que se cobrarán juntos (puede dividirse o unirse entre mesas).
+- **Comanda**: instrucción de preparación enviada a un área específica (cocina, barra, panadería, etc.), derivada de un pedido.
+- **Área de preparación**: estación de trabajo configurable (no fija en código) que recibe comandas — ej. cocina, barra, panadería.
+- **KDS** (Kitchen Display System): pantalla que muestra las comandas pendientes/en preparación de un área.
+- **Modificador**: ajuste opcional o requerido sobre un producto (ej. "sin azúcar", "extra queso").
+- **Receta**: composición de insumos y cantidades necesarias para producir un producto vendible.
+- **Insumo**: ingrediente o materia prima controlada en inventario.
+- **Merma**: pérdida o desperdicio de insumo registrado formalmente (vencimiento, daño, error).
+- **Traslado**: movimiento de inventario de una sede a otra dentro de la misma empresa.
+- **Cierre de caja**: proceso que totaliza los movimientos de una caja al final de un turno y deja el saldo registrado.

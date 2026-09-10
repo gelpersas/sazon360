@@ -1,0 +1,34 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament';
+@source '../../../../resources/views/filament';
+
+/*
+ * Formularios más cómodos para uso táctil en tablet — Fase 2 "Citrus Pop"
+ * (ver docs/DECISIONES.md). Filament genera sus clases utilitarias dentro de
+ * `@layer`, así que estas reglas sin capa ganan automáticamente sin
+ * necesitar `!important` (las reglas fuera de `@layer` siempre tienen
+ * prioridad sobre las que sí están en una capa, sin importar el orden).
+ */
+
+/* Altura y tipografía cómodas para tocar con el dedo — cubre TextInput,
+   Select y Textarea, que comparten el mismo wrapper (.fi-input-wrp) y el
+   mismo input visible (.fi-input). */
+.fi-input {
+    min-height: 3rem;
+    padding-block: 0.75rem;
+    font-size: 1rem;
+}
+
+textarea.fi-input {
+    min-height: 6rem;
+}
+
+/* Más aire vertical entre campos de un mismo formulario. */
+.fi-grid-ctn {
+    row-gap: 1.75rem;
+}
+
+.fi-fo-field-label {
+    font-size: 0.9375rem;
+}
