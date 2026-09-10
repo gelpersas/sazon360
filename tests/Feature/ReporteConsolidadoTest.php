@@ -27,7 +27,7 @@ function crearEmpresaConDosSedesYAdmin(string $nombreEmpresa): array
     return [$empresa, $sedeA, $sedeB, $admin];
 }
 
-function venderEnSede(Empresa $empresa, Sede $sede, User $usuario, string $precio, string $idempotencyKey): void
+function venderEnSede(Empresa $empresa, Sede $sede, User $usuario, string $precio, string $idempotencyKey): Pedido
 {
     $area = AreaPreparacion::factory()->for($empresa)->for($sede)->create();
     $producto = Producto::factory()->create(['empresa_id' => $empresa->id, 'precio' => $precio]);
@@ -43,6 +43,8 @@ function venderEnSede(Empresa $empresa, Sede $sede, User $usuario, string $preci
     ]);
 
     Pago::registrar($pedido, $usuario, MedioPago::Efectivo, $pedido->total(), "{$idempotencyKey}-pago");
+
+    return $pedido;
 }
 
 it('el reporte consolidado cruza las ventas de dos sedes de la misma empresa', function () {

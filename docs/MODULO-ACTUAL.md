@@ -4,51 +4,51 @@
 
 ## Nombre del módulo actual
 
-Primer despliegue a producción (DEC-066) — repositorio Git publicado en GitHub, Dockerfile para EasyPanel (VPS/Docker, ver DEC-002/003) y fix de `trustProxies` para que el POS/panel admin carguen bien detrás del proxy.
+Historial de ventas en Filament (DEC-067) — Resource "Ventas" con filtros/búsqueda, exportación Excel/CSV/PDF y recibo PDF por venta individual.
 
 ## Objetivo
 
-El usuario pidió subir Sazón360 a un repositorio Git y desplegarlo en EasyPanel. El repositorio no tenía `git init` ni Dockerfile todavía. El despliegue real (crear los servicios, dar "Implementar", leer logs de build) lo operó el usuario a través de **Claude para Chrome** contra la UI de EasyPanel — esta sesión (Claude Code) preparó el repo, escribió el Dockerfile y corrigió cada error real que Claude para Chrome fue reportando, de forma iterativa.
+Tras el despliegue a producción, el usuario consultó el estado de 4 features candidatas (reportes/export, edición de usuario extendida, impresión por red, offline) y pidió avanzar con la primera: "reportes y exportación filtros y búsquedas". La investigación encontró que no existía ningún Resource de Filament para ver el historial de ventas — solo "Pedidos abiertos" del POS (en vivo) y el "Reporte consolidado" (Fase 8, solo totales por sede) — exactamente el pendiente que DEC-024 había dejado anotado.
 
-## Alcance incluido (DEC-066)
+## Alcance incluido (DEC-067)
 
-Ver DEC-066 para el detalle completo. Resumen: `git init` + primer commit + push a `https://github.com/gelpersas/ControlPrintIA.git` (rama `main`); `Dockerfile` multi-stage (Node 22 para Vite + PHP 8.3-FPM/Nginx/supervisord), una sola imagen reutilizada por los 3 procesos (`web`/`reverb`/`queue-worker`, estos dos últimos solo cambian el comando de arranque en EasyPanel); 3 rondas de corrección contra errores reales de build (`vendor/` ausente en el stage de Vite, extensiones PHP `intl`/`zip` faltantes, `trustProxies` para que los assets no se pidan por `http://` detrás del proxy).
+Ver DEC-067 para el detalle completo. Resumen: `VentaResource` (modelo `Pedido`, solo lectura, mismo patrón de scoping de sede que `CajaResource`) con tabla filtrable (rango de fecha, sede, estado, medio de pago) y búsqueda; exportación Excel/CSV nativa de Filament (`VentaExporter`, reutiliza `openspout` ya instalado); exportación PDF del listado filtrado y recibo PDF por venta individual (`barryvdh/laravel-dompdf`, dependencia nueva); dos `RelationManager` de solo lectura (ítems, pagos) en el detalle de cada venta.
 
 ## Fuera de alcance (a propósito)
 
-Nada quedó deliberadamente fuera — el ciclo se hizo completo hasta que los 3 servicios respondieron correctamente en producción.
+Las otras 3 features consultadas en la ronda anterior (edición de usuario extendida, impresión térmica por red, funcionamiento offline) — quedan como pendientes de fondo, a elegir por el usuario cuál sigue.
 
 ## Reglas relacionadas
 
-Ninguna nueva. Se respetó el bloqueo de `git push`/edición de `.env` de `.claude/settings.json` en todo momento salvo `git push`, que el usuario pidió explícitamente desbloquear (sigue desbloqueado, ver DEC-066 — decisión pendiente de si se vuelve a bloquear).
+Ninguna nueva. Reutiliza el mecanismo nativo de exportación de Filament v4 (`ExportAction`/`Exporter`) en vez de construir uno paralelo.
 
 ## Archivos relacionados
 
-`Dockerfile`, `docker/nginx.conf`, `docker/supervisord.conf`, `.dockerignore`, `bootstrap/app.php` (+`trustProxies`), `.claude/settings.json` (`git push` desbloqueado), `docs/DECISIONES.md` (DEC-066).
+`database/migrations/2026_09_10_150000_create_exports_table.php`, `app/Filament/Resources/Ventas/` (Resource completo), `app/Filament/Exports/VentaExporter.php`, `app/Support/ReciboPdf.php`, `resources/views/pdf/{recibo,ventas-listado}.blade.php`, `composer.json` (+`barryvdh/laravel-dompdf`), `tests/Feature/VentaResourceTest.php`, `tests/Feature/ReporteConsolidadoTest.php` (`venderEnSede()` ahora retorna el `Pedido`), `docs/DECISIONES.md` (DEC-067).
 
 ## Trabajo terminado
 
-Despliegue confirmado end-to-end por el usuario: los 3 servicios (`web`, `reverb`, `queue-worker`) en verde sobre la misma imagen Docker; `migrate --force` y `storage:link` aplicados contra la base de datos real; `/admin/login` y `/pos/login` cargan completos con CSS/JS/fuentes por HTTPS (20/20 requests en 200 en la pestaña de red); `reverb` escuchando en `0.0.0.0:8080`; `queue-worker` estable. `composer test` (175/175) y `composer lint` en verde en cada commit.
+Implementado y verificado de punta a punta. `composer test`: 182/182 en verde (175 previos + 7 nuevos). `composer lint`: verde. `npm run build`: verde. Verificado con Playwright real (instalado/desinstalado) contra la sede real de Dulcita: listado, filtros, detalle con ítems/pagos, descarga real del recibo PDF y del PDF del listado (contenido verificado correcto), modal de exportación Excel/CSV de Filament abriendo correctamente. Durante la verificación se encontró y corrigió un bug real (no cosmético): las Actions de PDF no disparaban la descarga porque Livewire solo reconoce `StreamedResponse`/`BinaryFileResponse` como descarga, y `Pdf::download()` devuelve un `Response` plano — corregido envolviendo el contenido en `response()->streamDownload()`.
 
 ## Trabajo pendiente
 
-- Credenciales reales de Factus (facturación electrónica) — configurar las variables `FACTUS_*` en EasyPanel cuando el usuario las tenga a mano (bloqueante para que las ventas reales facturen correctamente, no para operar el POS).
-- El usuario pegó un token de GitHub (PAT) en el chat — se le recomendó revocarlo/regenerarlo; no confirmado si ya lo hizo.
+Ninguno bloqueante para este módulo. Pendiente de decisión del usuario: cuál de las otras 3 features (edición de usuario extendida, impresión térmica por red, offline) abordar después.
 
 ## Pruebas ejecutadas
 
-- `composer test` (Pest): 175/175 passed, tras cada cambio de código (`trustProxies`).
-- `composer lint` (Pint): verde en cada commit.
-- Verificación en producción real (no local): logs de build de EasyPanel, respuestas HTTP y pestaña de red de `/admin/login` y `/pos/login`, confirmados por el usuario vía Claude para Chrome.
+- `composer test` (Pest): 182/182 passed, 551 assertions.
+- `composer lint` (Pint): verde.
+- `npm run build`: verde.
+- Verificación manual con Playwright (temporal, instalado/desinstalado) contra datos reales de Dulcita — incluida la descarga real de ambos PDFs y verificación de su contenido.
 
 ## Errores conocidos
 
-Ninguno abierto.
+Ninguno abierto. Nota aparte (no de este módulo): la sede real de Dulcita acumula datos de prueba de rondas anteriores de esta sesión (68 "ventas" en distintos estados) — visible ahora en el nuevo listado; no afecta la corrección del módulo, pero conviene que el usuario los revise si no corresponden a actividad real.
 
 ## Decisiones pendientes
 
-Ninguna bloqueante para este módulo — despliegue cerrado.
+Ninguna bloqueante para este módulo.
 
 ## Próxima acción exacta
 
-Esperar instrucción del usuario. Cuando tenga las credenciales reales de Factus, configurar `FACTUS_*` en EasyPanel (ver "Trabajo pendiente"). Pendientes de fondo sin relación, bloqueados sin input del usuario: Fase 6 (impuesto DIAN reales de los productos de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito).
+Esperar instrucción del usuario sobre cuál de las 3 features restantes de la consulta anterior abordar (edición de usuario extendida, impresión térmica por red, offline) — o cualquier otra tarea. Pendientes de fondo sin relación: Fase 6 (impuesto DIAN reales de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito). Falta configurar `FACTUS_*` en producción cuando el usuario tenga las credenciales reales.
