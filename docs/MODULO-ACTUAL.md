@@ -28,11 +28,11 @@ Ninguna nueva. Se respetó el bloqueo de `git push`/edición de `.env` de `.clau
 
 ## Trabajo terminado
 
-Los 3 servicios (`web`, `reverb`, `queue-worker`) corriendo en EasyPanel; `migrate --force` y `storage:link` aplicados contra la base de datos real de producción; `composer test` (175/175) y `composer lint` en verde en cada commit. `/admin/login` y `/pos/login` responden 200; el fix de `trustProxies` para que carguen con CSS/JS por HTTPS quedó pusheado — verificación final de esa última corrección en curso por parte del usuario/Claude para Chrome al cerrar esta entrada.
+Despliegue confirmado end-to-end por el usuario: los 3 servicios (`web`, `reverb`, `queue-worker`) en verde sobre la misma imagen Docker; `migrate --force` y `storage:link` aplicados contra la base de datos real; `/admin/login` y `/pos/login` cargan completos con CSS/JS/fuentes por HTTPS (20/20 requests en 200 en la pestaña de red); `reverb` escuchando en `0.0.0.0:8080`; `queue-worker` estable. `composer test` (175/175) y `composer lint` en verde en cada commit.
 
 ## Trabajo pendiente
 
-- Confirmar (usuario/Claude para Chrome) que `/admin` y `/pos` cargan con estilos tras el fix de `trustProxies`.
+- Servicio "postgres" (Postgres 18) roto y sin usar en EasyPanel, reemplazado por "postgres17" (el que tiene los datos reales) — decidir si se borra.
 - Decidir si se vuelve a bloquear `git push` en `.claude/settings.json` ahora que el despliegue inicial terminó.
 - El usuario pegó un token de GitHub (PAT) en el chat — se le recomendó revocarlo/regenerarlo; no confirmado si ya lo hizo.
 - Variables de entorno de producción reales (Factus, mail, etc.) — no las tiene esta sesión, las cargó el usuario directamente en EasyPanel.
@@ -41,16 +41,17 @@ Los 3 servicios (`web`, `reverb`, `queue-worker`) corriendo en EasyPanel; `migra
 
 - `composer test` (Pest): 175/175 passed, tras cada cambio de código (`trustProxies`).
 - `composer lint` (Pint): verde en cada commit.
-- Verificación en producción real (no local): logs de build de EasyPanel, respuestas HTTP de `/admin/login` y `/pos/login`, reportados por el usuario vía Claude para Chrome.
+- Verificación en producción real (no local): logs de build de EasyPanel, respuestas HTTP y pestaña de red de `/admin/login` y `/pos/login`, confirmados por el usuario vía Claude para Chrome.
 
 ## Errores conocidos
 
-Ninguno abierto a la espera de la confirmación final del fix de `trustProxies`.
+Ninguno abierto.
 
 ## Decisiones pendientes
 
-Si se debe re-bloquear `git push` en `.claude/settings.json` — preguntar al usuario en la próxima sesión si no se resuelve antes.
+- Si se debe re-bloquear `git push` en `.claude/settings.json`.
+- Si se borra el servicio "postgres" (18) huérfano en EasyPanel.
 
 ## Próxima acción exacta
 
-Esperar confirmación de que `/admin` y `/pos` cargan correctamente en producción tras el último push. Pendientes de fondo sin relación, bloqueados sin input del usuario: Fase 6 (impuesto DIAN reales de los productos de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito).
+Esperar instrucción del usuario sobre los dos puntos de limpieza de arriba (postgres huérfano, re-bloquear git push). Pendientes de fondo sin relación, bloqueados sin input del usuario: Fase 6 (impuesto DIAN reales de los productos de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito).
