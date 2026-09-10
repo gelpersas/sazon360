@@ -32,8 +32,7 @@ Despliegue confirmado end-to-end por el usuario: los 3 servicios (`web`, `reverb
 
 ## Trabajo pendiente
 
-- Servicio "postgres" (Postgres 18) roto y sin usar en EasyPanel, reemplazado por "postgres17" (el que tiene los datos reales) — decidir si se borra.
-- Decidir si se vuelve a bloquear `git push` en `.claude/settings.json` ahora que el despliegue inicial terminó.
+- Servicio "postgres" (Postgres 18) roto y sin usar en EasyPanel — el usuario confirmó borrarlo; pendiente de que Claude para Chrome lo ejecute y lo confirme.
 - El usuario pegó un token de GitHub (PAT) en el chat — se le recomendó revocarlo/regenerarlo; no confirmado si ya lo hizo.
 - Variables de entorno de producción reales (Factus, mail, etc.) — no las tiene esta sesión, las cargó el usuario directamente en EasyPanel.
 
@@ -49,9 +48,8 @@ Ninguno abierto.
 
 ## Decisiones pendientes
 
-- Si se debe re-bloquear `git push` en `.claude/settings.json`.
-- Si se borra el servicio "postgres" (18) huérfano en EasyPanel.
+Ninguna bloqueante — el usuario ya confirmó ambas: borrar el postgres huérfano (pendiente de ejecución vía Claude para Chrome) y dejar `git push` desbloqueado en `.claude/settings.json` de forma permanente (decisión explícita, no un descuido).
 
 ## Próxima acción exacta
 
-Esperar instrucción del usuario sobre los dos puntos de limpieza de arriba (postgres huérfano, re-bloquear git push). Pendientes de fondo sin relación, bloqueados sin input del usuario: Fase 6 (impuesto DIAN reales de los productos de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito).
+Confirmar que Claude para Chrome borró el servicio "postgres" (18) huérfano en EasyPanel. Pendientes de fondo sin relación, bloqueados sin input del usuario: Fase 6 (impuesto DIAN reales de los productos de Dulcita), y los 2 puntos restantes de DEC-042 (POS electrónico, nota crédito/débito).
