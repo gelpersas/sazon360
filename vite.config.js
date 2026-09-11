@@ -26,8 +26,15 @@ export default defineConfig({
                 short_name: 'Sazón360',
                 start_url: '/pos',
                 display: 'standalone',
-                background_color: '#ffffff',
-                theme_color: '#0f172a',
+                // Paleta "Moka Contraste" (ver docs/DECISIONES.md DEC-070) —
+                // antes quedaban en un azul marino sin relación con ninguna
+                // paleta del POS (leftover sin actualizar desde el scaffold
+                // inicial). background_color es el fondo del splash screen
+                // al abrir la PWA instalada; theme_color tiñe la barra de
+                // estado/título del SO — ambos ahora coherentes con
+                // pos.css (--color-bg / --color-primary).
+                background_color: '#ece7dd',
+                theme_color: '#d9641f',
             },
         }),
     ],
