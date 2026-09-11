@@ -4,46 +4,46 @@
 
 ## Nombre del módulo actual
 
-Impresión térmica por red (DEC-069) — configuración de impresora por IP/puerto en `AreaPreparacion`, disparada al enviar una comanda, conviviendo con el KDS digital. Segundo y último de los dos módulos elegidos por el usuario (el primero, edición de perfil, ya está en DEC-068).
+Paleta "Moka Contraste" (DEC-070) — ajuste visual de color en modo claro del POS y del color primario de Filament, elegido por el usuario entre 4 opciones mostradas en un comparador visual.
 
 ## Objetivo
 
-El usuario pidió un módulo para configurar impresora por puerto y área, con impresión directa sin pedir nada. La investigación encontró que `docs/ARQUITECTURA.md` ya había anticipado el problema real (backend en VPS remoto, impresoras en red local de Dulcita) sin resolverlo — este módulo lo resuelve.
+El usuario pidió mejor contraste de color, "un poco más oscuro", "más atractivo y moderno", pidiendo sugerencias concretas. Se armó un comparador visual (Artifact) con la paleta actual + 3 alternativas sobre los mismos componentes reales del POS, y el usuario eligió "Moka Contraste".
 
-## Alcance incluido (DEC-069)
+## Alcance incluido (DEC-070)
 
-Ver DEC-069 para el detalle completo. Resumen: en vez de un "agente local" (lo que `ARQUITECTURA.md` había anticipado), Dulcita usa una IP pública con reenvío de puertos restringido a la IP del VPS (confirmado con el usuario) — el backend se conecta directo. `AreaPreparacion.impresora_ip`/`impresora_puerto` (nullable, configurable en Filament). `app/Listeners/ImprimirComandaAlEnviar.php` escucha el mismo evento que ya notifica al KDS y despacha `ImprimirComandaJob` (en cola, con reintentos nativos) solo cuando la comanda es nueva (`Pendiente`) y el área tiene impresora. `app/Services/Impresion/TicketComanda.php` construye el ticket ESC/POS (`mike42/escpos-php`, dependencia nueva). La impresión convive con el KDS, nunca lo reemplaza.
+Ver DEC-070 para el detalle completo. Resumen: nuevos tokens de color en modo claro de `resources/css/pos.css` (`bg`/`surface-soft`/`text`/`text-muted`/`primary`/`primary-hover`/`border`/`warning`/`warning-soft`) y nuevo `primary` en `AdminPanelProvider.php` (mismo hex que el POS, para mantener la marca consistente entre panel y POS táctil, como ya era desde DEC-054). Modo oscuro del POS y resto de colores semánticos de Filament (`gray`/`danger`/`warning`/`success`) sin cambios.
 
 ## Fuera de alcance (a propósito)
 
-Un "agente local" de impresión (descartado a favor de IP pública, ver DEC-069). Reintentos/alertas visibles en la UI si la impresora falla (el usuario confirmó que reintentar en silencio es suficiente). Imprimir en cada avance de estado del KDS (solo se imprime una vez, al crear la comanda).
+Modo oscuro del POS (no se tocó). `gray`/`danger`/`warning`/`success` de Filament (solo cambió `primary`). `success`/`danger` del POS en modo claro (no mostrados en el comparador, no pedidos).
 
 ## Reglas relacionadas
 
-Sigue `.claude/rules/laravel.md` al pie de la letra: "impresión" es el ejemplo textual que ya pedía Eventos+Listeners (no llamadas directas) y Jobs con cola (no bloquear la respuesta).
+Ninguna nueva.
 
 ## Archivos relacionados
 
-`database/migrations/2026_09_10_170000_add_impresora_a_area_preparacions_table.php`, `app/Models/AreaPreparacion.php`, `app/Filament/Resources/AreaPreparacions/Schemas/AreaPreparacionForm.php`, `app/Services/Impresion/TicketComanda.php`, `app/Jobs/ImprimirComandaJob.php`, `app/Listeners/ImprimirComandaAlEnviar.php`, `tests/Feature/ImpresionComandaTest.php`, `composer.json` (+`mike42/escpos-php`), `docs/DECISIONES.md` (DEC-069).
+`resources/css/pos.css`, `app/Providers/Filament/AdminPanelProvider.php`, `docs/DECISIONES.md` (DEC-070).
 
 ## Trabajo terminado
 
-Implementado y verificado de punta a punta. `composer test`: 191/191 en verde (185 previos + 6 nuevos). `composer lint`: verde. Verificado con Playwright real (formulario con los campos nuevos, edición real guardada) y un flujo end-to-end real vía `tinker` (comanda real → `ImprimirComandaJob` encolado en la tabla `jobs` real, sin poder probar contra una impresora física real). Datos de prueba revertidos al terminar.
+Implementado y verificado de punta a punta. `composer test`: 191/191 en verde (sin tests nuevos, cambio de CSS/config puro). `composer lint`: verde. `npm run build`: verde. Verificado con Playwright real (instalado/desinstalado) contra la sede real de Dulcita: POS en modo claro con la paleta nueva, panel Filament en modo oscuro y claro con el nuevo `primary` visible en la navegación activa. Cero errores de consola.
 
 ## Trabajo pendiente
 
-- **No probado contra una impresora física real** — no hay ninguna disponible en este entorno de desarrollo. Cuando Dulcita tenga la IP pública/reenvío de puertos configurado en su router, hay que confirmar con una impresora real que el ticket se imprime correctamente (formato, corte de papel, codificación de caracteres).
-- Con eso resueltos los 2 módulos que el usuario eligió de la consulta de prioridades. Quedan sin abordar (no pedidos todavía): funcionamiento offline, y los bloqueados esperando datos del usuario (Fase 6 DIAN, DEC-042, credenciales `FACTUS_*`).
+Ninguno bloqueante para este módulo. Con esto quedan resueltas las 3 tareas de la última ronda (edición de usuario DEC-068, impresión térmica DEC-069, paleta DEC-070).
 
 ## Pruebas ejecutadas
 
-- `composer test` (Pest): 191/191 passed, 581 assertions.
+- `composer test` (Pest): 191/191 passed (sin tests nuevos).
 - `composer lint` (Pint): verde.
-- Verificación manual con Playwright (temporal, instalado/desinstalado) + `tinker` contra datos reales de Dulcita.
+- `npm run build`: verde.
+- Verificación manual con Playwright (temporal, instalado/desinstalado) contra datos reales de Dulcita, en ambos modos (claro/oscuro) del panel admin.
 
 ## Errores conocidos
 
-Ninguno abierto. No probado contra hardware real (ver "Trabajo pendiente").
+Ninguno abierto.
 
 ## Decisiones pendientes
 
@@ -51,4 +51,4 @@ Ninguna bloqueante para este módulo.
 
 ## Próxima acción exacta
 
-Esperar a que Dulcita configure la IP pública/reenvío de puertos en su router para probar contra una impresora real. Mientras tanto, esperar instrucción del usuario sobre qué sigue — el offline es la única de las 4 features originales sin abordar; los demás pendientes de fondo (Fase 6 DIAN, DEC-042, `FACTUS_*`) siguen bloqueados esperando datos del usuario.
+Esperar instrucción del usuario. Pendientes de fondo sin relación, bloqueados sin su input: funcionamiento offline (la única de las 4 features originales sin abordar), Fase 6 (impuesto DIAN reales de Dulcita), DEC-042 (POS electrónico, nota crédito/débito), credenciales `FACTUS_*` en producción, y probar la impresión térmica (DEC-069) contra una impresora física real cuando Dulcita tenga la IP pública/reenvío de puertos configurado.

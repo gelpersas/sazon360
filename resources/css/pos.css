@@ -23,21 +23,27 @@
      * cualquier descendiente de <html class="dark">, sin tocar cada
      * componente — ver docs/DECISIONES.md).
      */
-    --color-bg: #fffbf5;
+    /*
+     * "Moka Contraste" (ver docs/DECISIONES.md) — reemplaza "Citrus Pop"
+     * (DEC-054) en modo claro: fondo más oscuro y menos saturado, acento
+     * terracota más profundo en vez de ámbar. El modo oscuro (abajo) no
+     * cambió, a pedido del usuario.
+     */
+    --color-bg: #ece7dd;
     --color-surface: #ffffff;
-    --color-surface-soft: #f5eee2;
-    --color-text: #3a2a1a;
-    --color-text-muted: #8a7660;
-    --color-primary: #df9436;
-    --color-primary-hover: #ae601f;
-    --color-border: #ede0d0;
+    --color-surface-soft: #ded5c2;
+    --color-text: #221c14;
+    --color-text-muted: #675c4c;
+    --color-primary: #d9641f;
+    --color-primary-hover: #a84c15;
+    --color-border: #d3c7ae;
 
     --color-success: #2f7a4d;
-    --color-success-soft: #e7f3ea;
+    --color-success-soft: #dbe8dd;
     --color-danger: #c0392b;
     --color-danger-soft: #fbeae8;
-    --color-warning: #b8791a;
-    --color-warning-soft: #fbf0dd;
+    --color-warning: #b06a15;
+    --color-warning-soft: #ecdec2;
 }
 
 .dark {

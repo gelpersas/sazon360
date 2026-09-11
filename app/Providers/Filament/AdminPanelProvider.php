@@ -33,18 +33,22 @@ class AdminPanelProvider extends PanelProvider
             ->tenant(Empresa::class, slugAttribute: 'slug')
             ->tenantRegistration(RegisterEmpresa::class)
             ->tenantProfile(EditEmpresaProfile::class)
-            // Paleta cálida crema/ámbar (ver docs/DECISIONES.md) — un solo
-            // hex por color semántico, Filament genera automáticamente toda
-            // la escala 50-950 y elige los tonos correctos para claro/oscuro
-            // por su cuenta (mecanismo nativo, no hay forma soportada de
-            // fijar un hex distinto por modo sin pelear contra su sistema
-            // interno de variables CSS — ver el docblock de
+            // Paleta cálida crema/terracota (ver docs/DECISIONES.md) — un
+            // solo hex por color semántico, Filament genera automáticamente
+            // toda la escala 50-950 y elige los tonos correctos para
+            // claro/oscuro por su cuenta (mecanismo nativo, no hay forma
+            // soportada de fijar un hex distinto por modo sin pelear contra
+            // su sistema interno de variables CSS — ver el docblock de
             // resources/css/filament/admin/theme.css). 'gray' es la que más
             // rinde: maneja fondo, bordes y texto silenciado de TODO el
             // panel (sidebar, tablas, tarjetas, modales), así que sembrarla
-            // con un neutro cálido calienta la app entera de un solo cambio.
+            // con un neutro cálido calienta la app entera de un solo cambio
+            // — sin cambiar (ya es un neutro cálido consistente con la
+            // paleta nueva). 'primary' sí cambió: mismo acento terracota
+            // "Moka Contraste" que ahora usa el POS (resources/css/pos.css),
+            // para que ambas superficies compartan color de marca.
             ->colors([
-                'primary' => Color::hex('#DF9436'),
+                'primary' => Color::hex('#D9641F'),
                 'gray' => Color::hex('#78716C'),
                 'danger' => Color::hex('#C0392B'),
                 'warning' => Color::hex('#B8791A'),
